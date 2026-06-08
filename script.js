@@ -5,11 +5,15 @@ let minesPlaced = 0;
 let isFirstClick = true;
 
 //functions
-function placeMines() {
+function placeMines(startR, startC) {
     while (minesPlaced < 10) {
         let r = Math.floor(Math.random() * 9);
         let c = Math.floor(Math.random() * 9);
         
+        if (Math.abs(r - startR) <= 1 && Math.abs(c - startC) <= 1) {
+            continue; //safe zone around first click
+        }
+
         if (!gameState[r][c].isMine) {
             gameState[r][c].isMine = true;
             minesPlaced++;
@@ -82,8 +86,6 @@ for (let i = 0; i < 9; i++) {
     gameState.push(row);
 }
 
-placeMines();
-countNeighborMines();
 
 //webdatarocks initialization
 let pivot = new WebDataRocks({
@@ -114,6 +116,12 @@ document.getElementById("wdr-component").addEventListener("click", function(even
         
         let r = parseInt(event.target.getAttribute("data-r"));
         let c = parseInt(event.target.getAttribute("data-c"));
+
+        if (isFirstClick) {
+        isFirstClick = false;
+        placeMines(r, c);
+        countNeighborMines();
+        }
         
         gameState[r][c].isRevealed = true;
         
