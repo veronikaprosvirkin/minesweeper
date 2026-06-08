@@ -1,0 +1,34 @@
+
+.cell {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+.cell.hidden {
+    background-color: #c0c0c0;
+    border: 2px solid;
+    border-top-color: #ffffff;
+    border-left-color: #ffffff;
+    border-bottom-color: #808080;
+    border-right-color: #808080;
+}
+#wdr-component .wdr-cell {
+    padding: 0 !important;
+    min-width: 30px !important;
+}
+
+#wdr-component .wdr-header {
+    padding: 0 !important;
+    min-width: 30px !important;
+    display: none !important;
+}
+
+#wdr-component .wdr-empty,
+#wdr-component .wdr-blank {
+    display: none !important;
+}
