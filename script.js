@@ -3,6 +3,9 @@ let wdrData = [];
 let gameState = [];
 let minesPlaced = 0;
 let isFirstClick = true;
+let timerInterval = null;
+let timeElapsed = 0;
+let flagsPlaced = 0;
 
 //functions
 function placeMines(startR, startC) {
@@ -59,6 +62,17 @@ function revealCell(r, c) {
             }
         }
     }
+}
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timeElapsed++;
+        document.getElementById("timer").textContent = timeElapsed.toString().padStart(3, '0');
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
 }
 
 //view function
@@ -120,7 +134,8 @@ let pivot = new WebDataRocks({
             columns: [{ uniqueName: "Column" }],
             measures: [{ uniqueName: "Value"}] 
         },
-        options: { 
+        options: {
+            drillThrough: false, 
             grid: {
                 showHeaders: false,
                 showGrandTotals: "off",
@@ -145,6 +160,7 @@ document.getElementById("wdr-component").addEventListener("click", function(even
 
         if (isFirstClick) {
         isFirstClick = false;
+        startTimer();
         placeMines(r, c);
         countNeighborMines();
         }
@@ -153,6 +169,7 @@ document.getElementById("wdr-component").addEventListener("click", function(even
         
         if (gameState[r][c].isMine) {
             alert("Game Over!");
+            stopTimer();
         }
         
         pivot.refresh();
@@ -168,9 +185,13 @@ document.getElementById("wdr-component").addEventListener("contextmenu", functio
         
         if (!cell.isFlagged && !cell.isQuestioned) {
             cell.isFlagged = true;
+            flagsPlaced++;
+            document.getElementById("mines-counter").textContent = (10 - flagsPlaced).toString();
         } else if (cell.isFlagged && !cell.isQuestioned) {
             cell.isFlagged = false;
             cell.isQuestioned = true;
+            flagsPlaced--;
+            document.getElementById("mines-counter").textContent = (10 - flagsPlaced).toString();
         } else if (!cell.isFlagged && cell.isQuestioned) {
             cell.isQuestioned = false;
         }
