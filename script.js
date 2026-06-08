@@ -1,25 +1,18 @@
 //variables
 let wdrData = [];
 let gameState = [];
-let minesPlaсed = 0;
-
+let minesPlaced = 0;
+let isFirstClick = true;
 
 //functions
-function renderGameCells(cellBuilder, cellData) {
-    if (cellData.type === "value" && cellData.rows && cellData.columns && cellData.rows.length > 0 && cellData.columns.length > 0) {
-        let row = cellData.rows[0].caption;
-        let col = cellData.columns[0].caption;
-        cellBuilder.text = `<div class="cell hidden" data-r="${row}" data-c="${col}"></div>`;
-    }
-}
-
 function placeMines() {
-    while (minesPlaсed < 10) {
+    while (minesPlaced < 10) {
         let r = Math.floor(Math.random() * 9);
         let c = Math.floor(Math.random() * 9);
+        
         if (!gameState[r][c].isMine) {
             gameState[r][c].isMine = true;
-            minesPlaсed++;
+            minesPlaced++;
         }
     }
 }
@@ -30,11 +23,13 @@ function countNeighborMines() {
             if (gameState[r][c].isMine) {
                 continue;
             }
+            
             let count = 0;
             for (let dr = -1; dr <= 1; dr++) {
                 for (let dc = -1; dc <= 1; dc++) {
                     let nr = r + dr;
                     let nc = c + dc;
+                    
                     if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
                         if (gameState[nr][nc].isMine) {
                             count++;
@@ -47,14 +42,38 @@ function countNeighborMines() {
     }
 }
 
+//view function
+function renderGameCells(cellBuilder, cellData) {
+    if (cellData.type === "value" && cellData.rows && cellData.columns && cellData.rows.length > 0 && cellData.columns.length > 0) {
+        
+        let row = parseInt(cellData.rows[0].caption.substring(1));
+        let col = parseInt(cellData.columns[0].caption.substring(1));
 
-//data generation
+        let cell = gameState[row][col];
+
+        if (cell.isRevealed) {
+            let content = "";
+            if (cell.isMine) {
+                content = "💣";
+            } else if (cell.neighborMines > 0) {
+                content = cell.neighborMines;
+            }
+            
+            cellBuilder.text = `<div class="cell revealed">${content}</div>`;
+        } else {
+            cellBuilder.text = `<div class="cell hidden" data-r="${row}" data-c="${col}"></div>`;
+        }
+    }
+}
+
+
 for (let i = 0; i < 9; i++) {
     for (let j = 0; j < 9; j++) {
         wdrData.push({ "Row": "R" + i, "Column": "C" + j, "Value": 1 });
     }
 }
 
+//matrix initialization
 for (let i = 0; i < 9; i++) {
     let row = [];
     for (let j = 0; j < 9; j++) {
@@ -64,9 +83,9 @@ for (let i = 0; i < 9; i++) {
 }
 
 placeMines();
+countNeighborMines();
 
-
-// game init
+//webdatarocks initialization
 let pivot = new WebDataRocks({
     container: "#wdr-component",
     customizeCell: renderGameCells,
@@ -78,15 +97,30 @@ let pivot = new WebDataRocks({
             columns: [{ uniqueName: "Column" }],
             measures: [{ uniqueName: "Value"}] 
         },
-
         options: { 
             grid: {
-                showHeaders: false,     
-                showGrandTotals: "off", 
-                showTotals: "off"       
+                showHeaders: false,
+                showGrandTotals: "off",
+                showTotals: "off",
+                showSelection: false
             }
         }
-    },
-    
+    }
 });
 
+//event listener
+document.getElementById("wdr-component").addEventListener("click", function(event) {
+    if (event.target.classList.contains("cell") && event.target.classList.contains("hidden")) {
+        
+        let r = parseInt(event.target.getAttribute("data-r"));
+        let c = parseInt(event.target.getAttribute("data-c"));
+        
+        gameState[r][c].isRevealed = true;
+        
+        if (gameState[r][c].isMine) {
+            alert("Game Over!");
+        }
+        
+        pivot.refresh();
+    }
+});
