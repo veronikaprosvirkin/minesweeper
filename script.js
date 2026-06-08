@@ -46,6 +46,21 @@ function countNeighborMines() {
     }
 }
 
+function revealCell(r, c) {
+    if (r < 0 || r >= 9 || c < 0 || c >= 9 || gameState[r][c].isRevealed) {
+        return;
+    }
+
+    gameState[r][c].isRevealed = true;
+    if (gameState[r][c].neighborMines === 0 && !gameState[r][c].isMine) {
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                revealCell(r + dr, c + dc);
+            }
+        }
+    }
+}
+
 //view function
 function renderGameCells(cellBuilder, cellData) {
     if (cellData.type === "value" && cellData.rows && cellData.columns && cellData.rows.length > 0 && cellData.columns.length > 0) {
@@ -65,7 +80,13 @@ function renderGameCells(cellBuilder, cellData) {
             
             cellBuilder.text = `<div class="cell revealed">${content}</div>`;
         } else {
+            if (cell.isFlagged) {
+                cellBuilder.text = `<div class="cell hidden flagged" data-r="${row}" data-c="${col}">🚩</div>`;
+            } else if (cell.isQuestioned) {
+                cellBuilder.text = `<div class="cell hidden questioned" data-r="${row}" data-c="${col}">❓</div>`;
+            } else {
             cellBuilder.text = `<div class="cell hidden" data-r="${row}" data-c="${col}"></div>`;
+            }
         }
     }
 }
@@ -81,7 +102,7 @@ for (let i = 0; i < 9; i++) {
 for (let i = 0; i < 9; i++) {
     let row = [];
     for (let j = 0; j < 9; j++) {
-       row.push({isMine: false, isRevealed: false, isFlagged: false, neighborMines: 0});
+       row.push({isMine: false, isRevealed: false, isFlagged: false, isQuestioned: false, neighborMines: 0});
     }
     gameState.push(row);
 }
@@ -116,6 +137,11 @@ document.getElementById("wdr-component").addEventListener("click", function(even
         
         let r = parseInt(event.target.getAttribute("data-r"));
         let c = parseInt(event.target.getAttribute("data-c"));
+        let cell = gameState[r][c];
+
+        if (cell.isFlagged || cell.isQuestioned) {
+            return;
+        }
 
         if (isFirstClick) {
         isFirstClick = false;
@@ -123,12 +149,31 @@ document.getElementById("wdr-component").addEventListener("click", function(even
         countNeighborMines();
         }
         
-        gameState[r][c].isRevealed = true;
+        revealCell(r, c);
         
         if (gameState[r][c].isMine) {
             alert("Game Over!");
         }
         
+        pivot.refresh();
+    }
+});
+
+document.getElementById("wdr-component").addEventListener("contextmenu", function(event) {
+    event.preventDefault();
+    if (event.target.classList.contains("cell") && event.target.classList.contains("hidden")) {
+        let r = parseInt(event.target.getAttribute("data-r"));
+        let c = parseInt(event.target.getAttribute("data-c"));
+        let cell = gameState[r][c];
+        
+        if (!cell.isFlagged && !cell.isQuestioned) {
+            cell.isFlagged = true;
+        } else if (cell.isFlagged && !cell.isQuestioned) {
+            cell.isFlagged = false;
+            cell.isQuestioned = true;
+        } else if (!cell.isFlagged && cell.isQuestioned) {
+            cell.isQuestioned = false;
+        }
         pivot.refresh();
     }
 });
