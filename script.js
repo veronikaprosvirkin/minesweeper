@@ -75,6 +75,29 @@ function stopTimer() {
     clearInterval(timerInterval);
 }
 
+function restartGame() {
+    stopTimer();
+    timeElapsed = 0;
+    document.getElementById("timer").textContent = "000";
+
+    flagsPlaced = 0;
+    minesPlaced = 0;
+    isFirstClick = true;
+    document.getElementById("mines-counter").textContent = "10";
+    document.getElementById("smiley-btn").textContent = "😊";
+
+    gameState = []; 
+    for (let i = 0; i < 9; i++) {
+        let row = [];
+        for (let j = 0; j < 9; j++) {
+           row.push({isMine: false, isRevealed: false, isFlagged: false, isQuestioned: false, neighborMines: 0});
+        }
+        gameState.push(row);
+    }
+
+    pivot.refresh();
+}
+
 //view function
 function renderGameCells(cellBuilder, cellData) {
     if (cellData.type === "value" && cellData.rows && cellData.columns && cellData.rows.length > 0 && cellData.columns.length > 0) {
@@ -168,6 +191,7 @@ document.getElementById("wdr-component").addEventListener("click", function(even
         revealCell(r, c);
         
         if (gameState[r][c].isMine) {
+            document.getElementById("smiley-btn").textContent = "😵";
             alert("Game Over!");
             stopTimer();
         }
@@ -198,3 +222,5 @@ document.getElementById("wdr-component").addEventListener("contextmenu", functio
         pivot.refresh();
     }
 });
+
+document.getElementById("smiley-btn").addEventListener("click", restartGame);
