@@ -100,6 +100,38 @@ function restartGame() {
     pivot.refresh();
 }
 
+function checkWin() {
+    let revealedCount = 0;
+
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            let cell = gameState[r][c];
+            if (!cell.isMine && cell.isRevealed) {
+                revealedCount++;
+            }
+        }
+    }
+
+    if (revealedCount === 71) { // 81 total - 10 mines
+        document.getElementById("smiley-btn").textContent = "😎";
+        alert("Congratulations! You won!");
+        stopTimer();
+    }
+}
+
+function revealAllOnLoss() {
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            if (gameState[r][c].isMine && !gameState[r][c].isFlagged) {
+                gameState[r][c].isRevealed = true;
+            }
+            else if (!gameState[r][c].isMine && gameState[r][c].isFlagged) {
+                gameState[r][c].isMistake = true; //for styling incorrect flags
+            }
+        }
+    }
+}
+
 //view function
 function renderGameCells(cellBuilder, cellData) {
     if (cellData.type === "value" && cellData.rows && cellData.columns && cellData.rows.length > 0 && cellData.columns.length > 0) {
@@ -119,12 +151,14 @@ function renderGameCells(cellBuilder, cellData) {
             
             cellBuilder.text = `<div class="cell revealed">${content}</div>`;
         } else {
-            if (cell.isFlagged) {
+            if (cell.isMistake) {
+                cellBuilder.text = `<div class="cell hidden mistake" data-r="${row}" data-c="${col}">❌</div>`;
+            } else if (cell.isFlagged) {
                 cellBuilder.text = `<div class="cell hidden flagged" data-r="${row}" data-c="${col}">🚩</div>`;
             } else if (cell.isQuestioned) {
                 cellBuilder.text = `<div class="cell hidden questioned" data-r="${row}" data-c="${col}">❓</div>`;
             } else {
-            cellBuilder.text = `<div class="cell hidden" data-r="${row}" data-c="${col}"></div>`;
+                cellBuilder.text = `<div class="cell hidden" data-r="${row}" data-c="${col}"></div>`;
             }
         }
     }
@@ -191,9 +225,11 @@ document.getElementById("wdr-component").addEventListener("click", function(even
         }
         
         revealCell(r, c);
+        checkWin();
         
         if (gameState[r][c].isMine) {
             document.getElementById("smiley-btn").textContent = "😵";
+            revealAllOnLoss();
             alert("Game Over!");
             stopTimer();
         }
