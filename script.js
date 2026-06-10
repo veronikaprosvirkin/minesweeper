@@ -67,7 +67,9 @@ function revealCell(r, c) {
 function startTimer() {
     timerInterval = setInterval(() => {
         timeElapsed++;
-        document.getElementById("timer").textContent = timeElapsed.toString().padStart(3, '0');
+        let minutes = Math.floor(timeElapsed / 60);
+        let seconds = timeElapsed % 60;
+        document.getElementById("timer").textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }, 1000);
 }
 
@@ -78,7 +80,7 @@ function stopTimer() {
 function restartGame() {
     stopTimer();
     timeElapsed = 0;
-    document.getElementById("timer").textContent = "000";
+    document.getElementById("timer").textContent = "00:00";
 
     flagsPlaced = 0;
     minesPlaced = 0;
