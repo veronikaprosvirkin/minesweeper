@@ -6,6 +6,7 @@ let isFirstClick = true;
 let timerInterval = null;
 let timeElapsed = 0;
 let flagsPlaced = 0;
+let isGameOver = false;
 
 //functions
 function placeMines(startR, startC) {
@@ -96,7 +97,7 @@ function restartGame() {
         }
         gameState.push(row);
     }
-
+    isGameOver = false;
     pivot.refresh();
 }
 
@@ -115,6 +116,7 @@ function checkWin() {
     if (revealedCount === 71) { // 81 total - 10 mines
         document.getElementById("smiley-btn").textContent = "😎";
         alert("Congratulations! You won!");
+        isGameOver = true;
         stopTimer();
     }
 }
@@ -149,7 +151,7 @@ function renderGameCells(cellBuilder, cellData) {
                 content = cell.neighborMines;
             }
             
-            cellBuilder.text = `<div class="cell revealed">${content}</div>`;
+            cellBuilder.text = `<div class="cell revealed" data-r="${row}" data-c="${col}">${content}</div>`;
         } else {
             if (cell.isMistake) {
                 cellBuilder.text = `<div class="cell hidden mistake" data-r="${row}" data-c="${col}">❌</div>`;
@@ -207,8 +209,11 @@ let pivot = new WebDataRocks({
 
 //event listener
 document.getElementById("wdr-component").addEventListener("click", function(event) {
+    if (isGameOver) {
+        return;
+    }
+
     if (event.target.classList.contains("cell") && event.target.classList.contains("hidden")) {
-        
         let r = parseInt(event.target.getAttribute("data-r"));
         let c = parseInt(event.target.getAttribute("data-c"));
         let cell = gameState[r][c];
@@ -218,28 +223,88 @@ document.getElementById("wdr-component").addEventListener("click", function(even
         }
 
         if (isFirstClick) {
-        isFirstClick = false;
-        startTimer();
-        placeMines(r, c);
-        countNeighborMines();
+            isFirstClick = false;
+            startTimer();
+            placeMines(r, c);
+            countNeighborMines();
         }
-        
+
         revealCell(r, c);
         checkWin();
-        
+
         if (gameState[r][c].isMine) {
             document.getElementById("smiley-btn").textContent = "😵";
             revealAllOnLoss();
             alert("Game Over!");
             stopTimer();
+            isGameOver = true;
         }
-        
+
         pivot.refresh();
+    }
+    
+    else if (event.target.classList.contains("cell") && event.target.classList.contains("revealed")) {
+        let r = parseInt(event.target.getAttribute("data-r"));
+        let c = parseInt(event.target.getAttribute("data-c"));
+        let cell = gameState[r][c];
+
+        if (cell.neighborMines > 0) {
+            let flagsAround = 0;
+
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    let nr = r + dr;
+                    let nc = c + dc;
+                    if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+                        if (gameState[nr][nc].isFlagged) {
+                            flagsAround++;
+                        }
+                    }
+                }
+            }
+
+            if (flagsAround === cell.neighborMines) {
+                let hitMine = false;
+
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        let nr = r + dr;
+                        let nc = c + dc;
+                        if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+                            let neighbor = gameState[nr][nc];
+                            
+                            if (!neighbor.isRevealed && !neighbor.isFlagged) {
+                                revealCell(nr, nc);
+                                
+                                if (neighbor.isMine) {
+                                    hitMine = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (hitMine) {
+                    document.getElementById("smiley-btn").textContent = "😵";
+                    revealAllOnLoss();
+                    alert("Game Over!");
+                    stopTimer();
+                    isGameOver = true;
+                } else {
+                    checkWin();
+                }
+
+                pivot.refresh();
+            }
+        }
     }
 });
 
 document.getElementById("wdr-component").addEventListener("contextmenu", function(event) {
     event.preventDefault();
+    if (isGameOver) {
+        return;
+    }
     if (event.target.classList.contains("cell") && event.target.classList.contains("hidden")) {
         let r = parseInt(event.target.getAttribute("data-r"));
         let c = parseInt(event.target.getAttribute("data-c"));
