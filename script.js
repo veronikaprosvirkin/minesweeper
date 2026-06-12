@@ -145,13 +145,16 @@ function renderGameCells(cellBuilder, cellData) {
 
         if (cell.isRevealed) {
             let content = "";
+            let colorClass = "";
+
             if (cell.isMine) {
                 content = "💣";
             } else if (cell.neighborMines > 0) {
                 content = cell.neighborMines;
+                colorClass = `val-${cell.neighborMines}`;
             }
             
-            cellBuilder.text = `<div class="cell revealed" data-r="${row}" data-c="${col}">${content}</div>`;
+            cellBuilder.text = `<div class="cell revealed ${colorClass}" data-r="${row}" data-c="${col}">${content}</div>`;
         } else {
             if (cell.isMistake) {
                 cellBuilder.text = `<div class="cell hidden mistake" data-r="${row}" data-c="${col}">❌</div>`;
