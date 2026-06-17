@@ -56,7 +56,6 @@ body {
 }
 
 #wdr-component {
-    /* Центрування рушія */
     width: max-content; 
     margin: 0 auto;
     display: flex;
